@@ -681,10 +681,12 @@
             
             // Always show all three series
             const densityFactor = currentDensity / 30;
+            const rate = discountRate / 100;
             
-            // Cost data (positive values now)
+            // Cost data (positive values now) with discount applied
             const costData = selectedModel.cash_flow.map(item => {
-                return item.costs * densityFactor; // Positive values for better visualization
+                const discountFactor = Math.pow(1 + rate, item.year);
+                return (item.costs * densityFactor) / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -696,9 +698,10 @@
                 fill: false
             });
             
-            // Benefit data
+            // Benefit data with discount applied
             const benefitData = selectedModel.cash_flow.map(item => {
-                return item.benefits * densityFactor;
+                const discountFactor = Math.pow(1 + rate, item.year);
+                return (item.benefits * densityFactor) / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -710,9 +713,10 @@
                 fill: false
             });
             
-            // Cash flow data (net)
+            // Cash flow data (net) with discount applied
             const cashFlowData = selectedModel.cash_flow.map(item => {
-                return item.net * densityFactor;
+                const discountFactor = Math.pow(1 + rate, item.year);
+                return (item.net * densityFactor) / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -794,6 +798,8 @@
                                     const yearIndex = tooltipItems[0].dataIndex;
                                     const yearData = selectedModel.cash_flow[yearIndex];
                                     const densityFactor = currentDensity / 30;
+                                    const rate = discountRate / 100;
+                                    const discountFactor = Math.pow(1 + rate, yearData.year);
                                     
                                     let lines = [];
                                     
@@ -803,7 +809,7 @@
                                         lines.push('COST BREAKDOWN:');
                                         let totalCosts = 0;
                                         yearData.cost_details.forEach(cost => {
-                                            const adjustedAmount = cost.amount * densityFactor;
+                                            const adjustedAmount = (cost.amount * densityFactor) / discountFactor;
                                             totalCosts += adjustedAmount;
                                             lines.push(`   ${cost.category}: $${adjustedAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                         });
@@ -817,7 +823,7 @@
                                         let totalBenefits = 0;
                                         yearData.benefit_details.forEach(benefit => {
                                             const adjustedQuantity = benefit.quantity * densityFactor;
-                                            const adjustedValue = benefit.value * densityFactor;
+                                            const adjustedValue = (benefit.value * densityFactor) / discountFactor;
                                             totalBenefits += adjustedValue;
                                             lines.push(`   Harvest: ${adjustedQuantity.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${benefit.unit || 'units'}`);
                                             lines.push(`   Unit Price: $${benefit.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${benefit.unit || 'unit'}`);
@@ -827,7 +833,7 @@
                                     }
                                     
                                     // Net cash flow
-                                    const netCashFlow = yearData.net * densityFactor;
+                                    const netCashFlow = (yearData.net * densityFactor) / discountFactor;
                                     lines.push('');
                                     lines.push(`NET CASH FLOW: $${netCashFlow.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     
