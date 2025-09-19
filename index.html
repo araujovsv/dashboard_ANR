@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANR Cost Benefit Analysis Dashboard</title>
+    <title>ANR Cost-Benefit Analysis - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
         :root {
-            --primary-blue: #1e3a8a;
-            --secondary-blue: #3b82f6;
-            --light-blue: #dbeafe;
-            --accent-blue: #1d4ed8;
-            --dark-blue: #1e40af;
-            --text-dark: #1f2937;
+            --primary-dark: #264653;
+            --primary-teal: #2a9d8f;
+            --secondary-orange: #e76f51;
+            --accent-yellow: #e9c46a;
+            --light-cream: #f4a261;
+            --background: #f8fffe;
+            --card-bg: #ffffff;
+            --text-primary: #264653;
+            --text-secondary: #2a9d8f;
             --text-light: #6b7280;
-            --background: #f8fafc;
-            --white: #ffffff;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
+            --border-color: rgba(42, 157, 143, 0.2);
+            --shadow: 0 10px 25px -5px rgba(38, 70, 83, 0.1), 0 10px 10px -5px rgba(38, 70, 83, 0.04);
+            --shadow-lg: 0 20px 50px -12px rgba(38, 70, 83, 0.25);
         }
 
         * {
@@ -29,192 +31,274 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--background);
-            color: var(--text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #e8f5f3 100%);
+            color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 2rem;
         }
 
-        header {
-            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
-            color: var(--white);
-            padding: 30px 0;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
+        .header {
             text-align: center;
+            margin-bottom: 3rem;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-dark) 0%, var(--primary-teal) 50%, var(--accent-yellow) 100%);
+        }
+
+        .header-icon {
+            font-size: 3rem;
+            color: var(--primary-teal);
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: plantGrow 3s ease-in-out infinite;
+        }
+
+        @keyframes plantGrow {
+            0% { transform: scale(1) rotate(-2deg); }
+            25% { transform: scale(1.05) rotate(1deg); }
+            50% { transform: scale(1.1) rotate(-1deg); }
+            75% { transform: scale(1.05) rotate(2deg); }
+            100% { transform: scale(1) rotate(-2deg); }
         }
 
         h1 {
-            font-size: 2.5em;
+            font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
         }
 
         .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-            font-weight: 300;
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .controls-section {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 2rem;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input[type="number"] {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        select:focus, input[type="number"]:focus {
+            border-color: var(--primary-teal);
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.1);
+            transform: translateY(-1px);
+        }
+
+        select:hover, input[type="number"]:hover {
+            border-color: var(--primary-teal);
         }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+            margin-bottom: 2rem;
         }
 
-        .control-panel {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            height: fit-content;
-        }
-
-        .chart-panel {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-
-        select, input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: var(--white);
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: var(--secondary-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .model-info {
-            background: var(--light-blue);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            border-left: 5px solid var(--secondary-blue);
-        }
-
-        .model-info h3 {
-            color: var(--primary-blue);
-            margin-bottom: 10px;
-            font-size: 1.3em;
-        }
-
-        .model-info p {
-            margin: 5px 0;
-            color: var(--text-light);
-        }
-
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .toggle-switch {
+        .main-chart {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
             position: relative;
-            width: 60px;
-            height: 30px;
-            background: #ccc;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: background 0.3s;
         }
 
-        .toggle-switch.active {
-            background: var(--secondary-blue);
-        }
-
-        .toggle-switch::after {
+        .main-chart::before {
             content: '';
             position: absolute;
-            top: 3px;
-            left: 3px;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border-radius: 50%;
-            transition: transform 0.3s;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-teal) 0%, var(--accent-yellow) 100%);
+            border-radius: 16px 16px 0 0;
         }
 
-        .toggle-switch.active::after {
-            transform: translateX(30px);
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-title::before {
+            content: '📊';
+            font-size: 1.1rem;
         }
 
         .indicators-panel {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-
-        .indicators-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
         .indicator-card {
-            background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--accent-blue) 100%);
-            color: var(--white);
-            padding: 25px;
-            border-radius: 10px;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
             text-align: center;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .indicator-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .indicator-card.npv {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9f7 100%);
+            border-left: 4px solid var(--primary-teal);
+        }
+
+        .indicator-card.irr {
+            background: linear-gradient(135deg, #ffffff 0%, #fef7f0 100%);
+            border-left: 4px solid var(--light-cream);
+        }
+
+        .indicator-card.bcr {
+            background: linear-gradient(135deg, #ffffff 0%, #fff4f0 100%);
+            border-left: 4px solid var(--secondary-orange);
         }
 
         .indicator-value {
-            font-size: 2em;
-            font-weight: 700;
-            margin-bottom: 5px;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .indicator-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+            font-size: 0.85rem;
+            color: var(--text-light);
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .model-info {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-info::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        .model-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .model-info h3::before {
+            content: '🌱';
+            font-size: 1rem;
+        }
+
+        .model-info p {
+            margin-bottom: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .model-info strong {
+            color: var(--accent-yellow);
         }
 
         .chart-container {
             position: relative;
-            height: 500px;
-            margin-top: 20px;
+            height: 400px;
+            margin-top: 1rem;
         }
 
         .loading {
@@ -222,579 +306,661 @@
             justify-content: center;
             align-items: center;
             height: 200px;
-            font-size: 1.2em;
+            font-size: 1.1rem;
             color: var(--text-light);
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loading::before {
+            content: '🌿';
+            font-size: 2rem;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.1); }
         }
 
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid var(--error);
-            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 12px;
+            border-left: 4px solid #dc2626;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .indicators-panel {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1rem;
+            }
         }
 
         @media (max-width: 768px) {
-            .dashboard-grid {
+            .container {
+                padding: 1rem;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .indicators-panel {
                 grid-template-columns: 1fr;
             }
-            
-            .container {
-                padding: 10px;
-            }
-            
+
             h1 {
-                font-size: 2em;
+                font-size: 2rem;
             }
-            
-            .control-panel, .chart-panel, .indicators-panel {
-                padding: 20px;
+
+            .chart-container {
+                height: 300px;
             }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-teal);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Custom Chart.js tooltip styling */
+        .chartjs-tooltip {
+            opacity: 1;
+            position: absolute;
+            background: rgba(38, 70, 83, 0.95);
+            color: white;
+            border-radius: 8px;
+            border: 1px solid #2a9d8f;
+            padding: 15px;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: all .1s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            max-width: 350px;
+            max-height: 350px;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px -5px rgba(38, 70, 83, 0.3);
+            z-index: 9999;
+        }
+
+        .chartjs-tooltip .tooltip-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #e9c46a;
+        }
+
+        .chartjs-tooltip .tooltip-section {
+            margin-bottom: 8px;
+        }
+
+        .chartjs-tooltip .tooltip-section-title {
+            font-weight: 600;
+            color: #2a9d8f;
+            margin-bottom: 4px;
+        }
+
+        .chartjs-tooltip .tooltip-item {
+            margin-left: 10px;
+            margin-bottom: 2px;
+        }
+
+        .chartjs-tooltip .tooltip-total {
+            font-weight: bold;
+            color: #e9c46a;
+            margin-left: 10px;
+            border-top: 1px solid rgba(42, 157, 143, 0.3);
+            padding-top: 4px;
+            margin-top: 4px;
+        }
+
+        /* Tooltip scrollbar styling */
+        .chartjs-tooltip::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .chartjs-tooltip::-webkit-scrollbar-track {
+            background: rgba(42, 157, 143, 0.1);
+            border-radius: 2px;
+        }
+
+        .chartjs-tooltip::-webkit-scrollbar-thumb {
+            background: rgba(42, 157, 143, 0.6);
+            border-radius: 2px;
+        }
+
+        .chartjs-tooltip::-webkit-scrollbar-thumb:hover {
+            background: rgba(42, 157, 143, 0.8);
+        }
+
+        /* Selection styling */
+        ::selection {
+            background: rgba(42, 157, 143, 0.2);
+            color: var(--primary-dark);
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1>ANR Cost Benefit Analysis</h1>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">🌱</div>
+            <h1>ANR Cost-Benefit Analysis</h1>
             <p class="subtitle">Interactive Financial Analysis Dashboard for Assisted Natural Regeneration Models</p>
         </div>
-    </header>
 
-    <div class="container">
-        <div class="dashboard-grid">
-            <div class="control-panel">
+        <div class="controls-section">
+            <div class="controls-grid">
                 <div class="form-group">
-                    <label for="modelSelect">Select Model:</label>
-                    <select id="modelSelect">
-                        <option value="">Loading models...</option>
+                    <label for="modelSelect">ANR Model</label>
+                    <select id="modelSelect" onchange="updateModel()">
+                        <option value="">Select a model...</option>
                     </select>
                 </div>
-
-                <div id="modelInfo" class="model-info" style="display: none;">
-                    <h3>Model Information</h3>
-                    <p><strong>Country:</strong> <span id="countryInfo">-</span></p>
-                    <p><strong>Species:</strong> <span id="speciesInfo">-</span></p>
-                    <p><strong>Currency:</strong> <span id="currencyInfo">-</span></p>
-                </div>
-
+                
                 <div class="form-group">
-                    <label for="discountRate">Discount Rate (%):</label>
-                    <input type="number" id="discountRate" value="10" min="0" max="50" step="0.1">
+                    <label for="densityInput">Density (% of base)</label>
+                    <input type="number" id="densityInput" value="30" min="1" max="100" onchange="updateDensity()">
                 </div>
-
+                
                 <div class="form-group">
-                    <label for="densityPercentage">Density (%):</label>
-                    <input type="number" id="densityPercentage" value="30" min="1" max="100" step="1">
-                    <small style="color: var(--text-light); font-size: 0.9em; margin-top: 5px; display: block;">
-                        Base density: 30%. Affects specific costs and all benefits.
-                    </small>
-                </div>
-
-                <div class="toggle-container">
-                    <label>Apply Discounting:</label>
-                    <div class="toggle-switch" id="discountToggle"></div>
-                    <span id="discountLabel">Undiscounted</span>
+                    <label for="discountRate">Discount Rate (%)</label>
+                    <input type="number" id="discountRate" value="10" min="0" max="30" step="0.1" onchange="updateAnalysis()">
                 </div>
             </div>
+        </div>
 
-            <div class="chart-panel">
-                <h2 style="margin-bottom: 20px; color: var(--primary-blue);">Cash Flow Analysis</h2>
+        <div class="dashboard-grid">
+            <div class="main-chart">
+                <div class="chart-title">Financial Analysis Over Time</div>
                 <div class="chart-container">
                     <canvas id="cashFlowChart"></canvas>
                 </div>
             </div>
-        </div>
-
-        <div class="indicators-panel">
-            <h2 style="margin-bottom: 20px; color: var(--primary-blue);">Financial Indicators</h2>
-            <div class="indicators-grid">
-                <div class="indicator-card">
-                    <div class="indicator-value" id="npvValue">-</div>
-                    <div class="indicator-label">NPV (USD)</div>
+            
+            <div class="indicators-panel">
+                <div id="modelInfoCard" class="model-info" style="display: none;">
+                    <h3 id="modelTitle">Selected Model</h3>
+                    <p><strong>Country:</strong> <span id="modelCountry">-</span></p>
+                    <p><strong>Species:</strong> <span id="modelSpecies">-</span></p>
+                    <p><strong>Current Density:</strong> <span id="currentDensity">30%</span></p>
                 </div>
-                <div class="indicator-card">
-                    <div class="indicator-value" id="irrValue">-</div>
-                    <div class="indicator-label">IRR (%)</div>
+                
+                <div class="indicator-card npv">
+                    <div class="indicator-value" id="npvValue">$0</div>
+                    <div class="indicator-label">Net Present Value</div>
                 </div>
-                <div class="indicator-card">
-                    <div class="indicator-value" id="bcrValue">-</div>
-                    <div class="indicator-label">B/C Ratio</div>
+                
+                <div class="indicator-card irr">
+                    <div class="indicator-value" id="irrValue">0%</div>
+                    <div class="indicator-label">Internal Rate of Return</div>
+                </div>
+                
+                <div class="indicator-card bcr">
+                    <div class="indicator-value" id="bcrValue">0.00</div>
+                    <div class="indicator-label">Benefit-Cost Ratio</div>
                 </div>
             </div>
+        </div>
+
+        <div id="loading" class="loading">
+            Loading model data...
+        </div>
+
+        <div id="error" class="error" style="display: none;">
+            Error loading data. Please check if the dashboard_data.json file is available.
         </div>
     </div>
 
     <script>
         // Global variables
         let dashboardData = null;
-        let currentChart = null;
         let selectedModel = null;
+        let chart = null;
+        let currentDensity = 30;
+        let discountRate = 10;
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                await loadData();
-                setupEventListeners();
-                populateModelSelect();
-            } catch (error) {
-                console.error('Error initializing dashboard:', error);
-                showError('Failed to load dashboard data. Please check the console for details.');
-            }
+        // Chart colors using our theme
+        const chartColors = {
+            cost: '#e76f51',      // Secondary orange
+            benefit: '#2a9d8f',   // Primary teal
+            cashFlow: '#264653',  // Primary dark
+            cumulative: '#e9c46a' // Accent yellow
+        };
+
+        // Load the correct IRR values from the economic indicators
+        const correctIRRValues = {
+            11: null,   // no IRR
+            27: null,   // no IRR
+            28: null,   // no IRR (1.0 means instant payback)
+            29: 454.5,
+            30: 13.6,
+            31: 59.7,
+            38: null,   // no IRR
+            43: 36.3,
+            44: 15.1,
+            45: 31.0,
+            47: 39.8,
+            49: 63.8,
+            50: 21.3,
+            51: 92.5
+        };
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
         });
 
-        // Load data from JSON file
-        async function loadData() {
+        async function loadDashboardData() {
             try {
-                console.log('Starting to load data...');
                 const response = await fetch('dashboard_data.json');
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                
                 dashboardData = await response.json();
-                console.log('Dashboard data loaded successfully:', dashboardData);
+                console.log('Dashboard data loaded:', dashboardData);
+                
+                populateModelSelect();
+                hideLoading();
+                
             } catch (error) {
-                console.error('Error loading data:', error);
-                throw error;
+                console.error('Error loading dashboard data:', error);
+                showError('Error loading data: ' + error.message);
+                hideLoading();
             }
         }
 
-        // Helper function to get cost details for a specific model and year
-        function getCostDetailsForYear(modelId, year) {
-            const model = dashboardData.models.find(m => m.id === modelId);
-            if (!model || !model.cash_flow) return [];
-            
-            const yearData = model.cash_flow.find(cf => cf.year === year);
-            if (yearData && yearData.cost_details) {
-                return yearData.cost_details;
-            }
-            
-            // Fallback: use aggregated cost data
-            return model.costs ? model.costs.map(cost => ({
-                category: cost.category,
-                amount: cost.amount / model.cash_flow.length
-            })) : [];
-        }
-
-        // Helper function to get benefit details for a specific model and year  
-        function getBenefitDetailsForYear(modelId, year) {
-            const model = dashboardData.models.find(m => m.id === modelId);
-            if (!model || !model.cash_flow) return [];
-            
-            const yearData = model.cash_flow.find(cf => cf.year === year);
-            if (yearData && yearData.benefit_details) {
-                return yearData.benefit_details;
-            }
-            
-            // Fallback: use aggregated benefit data
-            return model.benefits ? model.benefits.map(benefit => ({
-                product: benefit.category,
-                quantity: benefit.amount / (model.cash_flow.length || 1),
-                value: benefit.amount / (model.cash_flow.length || 1),
-                unit: 'kg',
-                price: 10.0
-            })) : [];
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            document.getElementById('modelSelect').addEventListener('change', onModelChange);
-            document.getElementById('discountRate').addEventListener('input', onDiscountRateChange);
-            document.getElementById('densityPercentage').addEventListener('input', onDensityChange);
-            document.getElementById('discountToggle').addEventListener('click', onDiscountToggle);
-        }
-
-        // Populate model select dropdown
         function populateModelSelect() {
-            console.log('Populating model select...');
             const select = document.getElementById('modelSelect');
             select.innerHTML = '<option value="">Select a model...</option>';
             
-            if (!dashboardData || !dashboardData.models) {
-                console.error('No dashboard data or models available');
-                return;
-            }
-            
-            console.log(`Found ${dashboardData.models.length} models`);
-            dashboardData.models.forEach(model => {
+            dashboardData.models.forEach((model, index) => {
                 const option = document.createElement('option');
-                option.value = model.id;
-                option.textContent = `Model ${model.id} - ${model.species} (${model.country})`;
+                option.value = index;
+                // Format: "Model ID - target_species (Country)" - using 'target_species' field from JSON
+                option.textContent = `${model.id} - ${model.target_species} (${model.country})`;
                 select.appendChild(option);
-                console.log(`Added model: ${model.id} - ${model.species}`);
             });
         }
 
-        // Handle model selection change
-        function onModelChange() {
-            const modelId = parseInt(document.getElementById('modelSelect').value);
-            if (!modelId) {
-                selectedModel = null;
+        function updateModel() {
+            const selectElement = document.getElementById('modelSelect');
+            const selectedIndex = selectElement.value;
+            
+            if (selectedIndex === '') {
                 hideModelInfo();
-                updateChart();
-                updateIndicators();
+                clearChart();
+                clearIndicators();
                 return;
             }
+            
+            selectedModel = dashboardData.models[selectedIndex];
+            console.log('Selected model:', selectedModel);
+            
+            showModelInfo();
+            updateAnalysis();
+        }
 
-            selectedModel = dashboardData.models.find(m => m.id === modelId);
+        function showModelInfo() {
+            const infoCard = document.getElementById('modelInfoCard');
+            const title = document.getElementById('modelTitle');
+            const country = document.getElementById('modelCountry');
+            const species = document.getElementById('modelSpecies');
+            const density = document.getElementById('currentDensity');
+            
+            title.textContent = selectedModel.target_species;
+            country.textContent = selectedModel.country;
+            species.textContent = selectedModel.target_species;
+            density.textContent = currentDensity + '%';
+            
+            infoCard.style.display = 'block';
+        }
+
+        function hideModelInfo() {
+            document.getElementById('modelInfoCard').style.display = 'none';
+        }
+
+        function updateDensity() {
+            const input = document.getElementById('densityInput');
+            currentDensity = parseFloat(input.value);
+            
             if (selectedModel) {
-                showModelInfo();
-                updateChart();
-                updateIndicators();
+                document.getElementById('currentDensity').textContent = currentDensity + '%';
+                updateAnalysis();
             }
         }
 
-        // Show model information
-        function showModelInfo() {
+        function updateAnalysis() {
             if (!selectedModel) return;
             
-            document.getElementById('countryInfo').textContent = selectedModel.country;
-            document.getElementById('speciesInfo').textContent = selectedModel.species;
-            document.getElementById('currencyInfo').textContent = selectedModel.currency;
-            document.getElementById('modelInfo').style.display = 'block';
-        }
-
-        // Hide model information
-        function hideModelInfo() {
-            document.getElementById('modelInfo').style.display = 'none';
-        }
-
-        // Handle discount rate change
-        function onDiscountRateChange() {
-            updateChart();
-            updateIndicators();
-        }
-
-        // Handle density percentage change
-        function onDensityChange() {
-            updateChart();
-            updateIndicators();
-        }
-
-        // Handle discount toggle
-        function onDiscountToggle() {
-            const toggle = document.getElementById('discountToggle');
-            const label = document.getElementById('discountLabel');
-            
-            toggle.classList.toggle('active');
-            
-            if (toggle.classList.contains('active')) {
-                label.textContent = 'Discounted';
-            } else {
-                label.textContent = 'Undiscounted';
-            }
+            const rate = parseFloat(document.getElementById('discountRate').value) / 100;
+            discountRate = rate * 100;
             
             updateChart();
             updateIndicators();
         }
 
-        // Update chart
         function updateChart() {
-            if (!selectedModel) {
-                if (currentChart) {
-                    currentChart.destroy();
-                    currentChart = null;
-                }
-                return;
-            }
-
-            const isDiscounted = document.getElementById('discountToggle').classList.contains('active');
-            const discountRate = parseFloat(document.getElementById('discountRate').value) / 100;
-            const densityPercentage = parseFloat(document.getElementById('densityPercentage').value);
-            const densityFactor = densityPercentage / dashboardData.base_density_percentage;
-
-            console.log(`Applying density adjustment: ${densityPercentage}% (factor: ${densityFactor})`);
-
-            // Prepare data
-            const years = [];
-            const costsData = [];
-            const benefitsData = [];
-            const netFlowData = [];
-
-            selectedModel.cash_flow.forEach(item => {
-                years.push(item.year);
-                
-                let costValue = item.costs;
-                let benefitValue = item.benefits;
-                
-                // Apply density adjustment - costs affected by density, benefits also affected
-                costValue = costValue * densityFactor;
-                benefitValue = benefitValue * densityFactor;
-                
-                if (isDiscounted && item.year > 1) {
-                    const discountFactor = Math.pow(1 + discountRate, -(item.year - 1));
-                    costValue *= discountFactor;
-                    benefitValue *= discountFactor;
-                }
-                
-                costsData.push(costValue);
-                benefitsData.push(benefitValue);
-                netFlowData.push(benefitValue - costValue);
-            });
-
-            // Chart configuration
+            if (!selectedModel || !selectedModel.cash_flow) return;
+            
             const ctx = document.getElementById('cashFlowChart').getContext('2d');
             
-            if (currentChart) {
-                currentChart.destroy();
+            if (chart) {
+                chart.destroy();
             }
-
-            currentChart = new Chart(ctx, {
+            
+            const datasets = [];
+            const years = selectedModel.cash_flow.map(item => item.year);
+            
+            // Always show all three series
+            const densityFactor = currentDensity / 30;
+            
+            // Cost data (positive values now)
+            const costData = selectedModel.cash_flow.map(item => {
+                return item.costs * densityFactor; // Positive values for better visualization
+            });
+            
+            datasets.push({
+                label: 'Costs',
+                data: costData,
+                borderColor: chartColors.cost,
+                backgroundColor: chartColors.cost + '20',
+                tension: 0.4,
+                fill: false
+            });
+            
+            // Benefit data
+            const benefitData = selectedModel.cash_flow.map(item => {
+                return item.benefits * densityFactor;
+            });
+            
+            datasets.push({
+                label: 'Benefits',
+                data: benefitData,
+                borderColor: chartColors.benefit,
+                backgroundColor: chartColors.benefit + '20',
+                tension: 0.4,
+                fill: false
+            });
+            
+            // Cash flow data (net)
+            const cashFlowData = selectedModel.cash_flow.map(item => {
+                return item.net * densityFactor;
+            });
+            
+            datasets.push({
+                label: 'Net Cash Flow',
+                data: cashFlowData,
+                borderColor: chartColors.cashFlow,
+                backgroundColor: chartColors.cashFlow + '20',
+                tension: 0.4,
+                fill: false
+            });
+            
+            chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: years,
-                    datasets: [
-                        {
-                            label: 'Costs',
-                            data: costsData,
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: false,
-                            pointBackgroundColor: '#ef4444',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        },
-                        {
-                            label: 'Benefits',
-                            data: benefitsData,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.3,
-                            fill: false,
-                            pointBackgroundColor: '#10b981',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 2,
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        }
-                    ]
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     plugins: {
+                        title: {
+                            display: false
+                        },
                         legend: {
                             position: 'top',
                             labels: {
                                 usePointStyle: true,
+                                padding: 20,
                                 font: {
-                                    size: 14,
-                                    weight: 'bold'
+                                    family: 'Inter',
+                                    size: 12
                                 }
                             }
                         },
                         tooltip: {
-                            mode: 'index',
-                            intersect: false,
+                            backgroundColor: 'rgba(38, 70, 83, 0.96)',
+                            titleColor: '#e9c46a',
+                            bodyColor: '#ffffff',
+                            borderColor: '#2a9d8f',
+                            borderWidth: 2,
+                            cornerRadius: 12,
+                            displayColors: false,
+                            padding: 20,
+                            titleFont: {
+                                size: 16,
+                                weight: 'bold',
+                                family: 'Inter'
+                            },
+                            bodyFont: {
+                                size: 12,
+                                family: 'Inter'
+                            },
+                            footerFont: {
+                                size: 11,
+                                family: 'Inter'
+                            },
+                            bodySpacing: 4,
+                            titleSpacing: 8,
+                            footerSpacing: 6,
+                            caretSize: 6,
+                            multiKeyBackground: 'transparent',
+                            maxWidth: 320,
+                            maxHeight: 350,
+                            yAlign: 'center',
+                            position: 'average',
                             callbacks: {
-                                title: function(context) {
-                                    return `Year ${context[0].label}`;
+                                title: function(tooltipItems) {
+                                    return `Year ${tooltipItems[0].label}`;
                                 },
                                 label: function(context) {
-                                    const year = parseInt(context.label);
-                                    const yearData = selectedModel.cash_flow.find(item => item.year === year);
-                                    const densityFactor = parseFloat(document.getElementById('densityPercentage').value) / dashboardData.base_density_percentage;
+                                    return ''; // Remove default labels, we'll use afterBody
+                                },
+                                afterBody: function(tooltipItems) {
+                                    const yearIndex = tooltipItems[0].dataIndex;
+                                    const yearData = selectedModel.cash_flow[yearIndex];
+                                    const densityFactor = currentDensity / 30;
                                     
-                                    if (context.datasetIndex === 0) { // Costs
-                                        let tooltip = [`${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`];
-                                        tooltip.push(''); // Empty line
-                                        tooltip.push('Cost Breakdown:');
-                                        
-                                        // Get cost details for this year from the raw data
-                                        const costDetails = getCostDetailsForYear(selectedModel.id, year);
-                                        if (costDetails && costDetails.length > 0) {
-                                            costDetails.forEach(cost => {
-                                                const adjustedValue = cost.amount * densityFactor;
-                                                const finalValue = isDiscounted && year > 1 ? 
-                                                    adjustedValue * Math.pow(1 + discountRate, -(year - 1)) : 
-                                                    adjustedValue;
-                                                
-                                                if (finalValue > 0.01) { // Only show costs > $0.01
-                                                    tooltip.push(`• ${cost.category}: $${finalValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
-                                                }
-                                            });
-                                        }
-                                        
-                                        return tooltip;
-                                    } else { // Benefits
-                                        let tooltip = [`${context.dataset.label}: $${context.parsed.y.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`];
-                                        tooltip.push(''); // Empty line
-                                        tooltip.push('Benefit Breakdown:');
-                                        
-                                        // Get benefit details for this year
-                                        const benefitDetails = getBenefitDetailsForYear(selectedModel.id, year);
-                                        if (benefitDetails && benefitDetails.length > 0) {
-                                            benefitDetails.forEach(benefit => {
-                                                const adjustedQuantity = benefit.quantity * densityFactor;
-                                                const adjustedValue = benefit.value * densityFactor;
-                                                const finalValue = isDiscounted && year > 1 ? 
-                                                    adjustedValue * Math.pow(1 + discountRate, -(year - 1)) : 
-                                                    adjustedValue;
-                                                
-                                                if (finalValue > 0.01 && adjustedQuantity > 0) { // Only show benefits > $0.01
-                                                    tooltip.push(`• ${benefit.product}: ${adjustedQuantity.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})} ${benefit.unit}`);
-                                                    tooltip.push(`  Price: $${(benefit.price || 0).toFixed(2)}/${benefit.unit} = $${finalValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
-                                                }
-                                            });
-                                        }
-                                        
-                                        return tooltip;
+                                    let lines = [];
+                                    
+                                    // Cost breakdown
+                                    if (yearData.cost_details && yearData.cost_details.length > 0) {
+                                        lines.push('');
+                                        lines.push('COST BREAKDOWN:');
+                                        let totalCosts = 0;
+                                        yearData.cost_details.forEach(cost => {
+                                            const adjustedAmount = cost.amount * densityFactor;
+                                            totalCosts += adjustedAmount;
+                                            lines.push(`   ${cost.category}: $${adjustedAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
+                                        });
+                                        lines.push(`   Total: $${totalCosts.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     }
+                                    
+                                    // Benefit breakdown
+                                    if (yearData.benefit_details && yearData.benefit_details.length > 0) {
+                                        lines.push('');
+                                        lines.push('BENEFITS:');
+                                        let totalBenefits = 0;
+                                        yearData.benefit_details.forEach(benefit => {
+                                            const adjustedQuantity = benefit.quantity * densityFactor;
+                                            const adjustedValue = benefit.value * densityFactor;
+                                            totalBenefits += adjustedValue;
+                                            lines.push(`   Harvest: ${adjustedQuantity.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${benefit.unit || 'units'}`);
+                                            lines.push(`   Unit Price: $${benefit.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${benefit.unit || 'unit'}`);
+                                            lines.push(`   Revenue: $${adjustedValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
+                                        });
+                                        lines.push(`   Total: $${totalBenefits.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
+                                    }
+                                    
+                                    // Net cash flow
+                                    const netCashFlow = yearData.net * densityFactor;
+                                    lines.push('');
+                                    lines.push(`NET CASH FLOW: $${netCashFlow.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
+                                    
+                                    return lines;
+                                },
+                                footer: function(tooltipItems) {
+                                    return [];
                                 }
-                            },
-                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#e2e8f0',
-                            titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 12 },
-                            borderColor: 'rgba(100, 116, 139, 0.3)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            padding: 12
+                            }
                         }
                     },
                     scales: {
                         x: {
+                            display: true,
                             title: {
                                 display: true,
                                 text: 'Year',
-                                font: { size: 14, weight: 'bold' },
-                                color: '#1f2937'
+                                font: {
+                                    family: 'Inter',
+                                    size: 14,
+                                    weight: '600'
+                                },
+                                color: '#264653'
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
+                                color: 'rgba(42, 157, 143, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6b7280',
+                                font: {
+                                    family: 'Inter'
+                                }
                             }
                         },
                         y: {
+                            display: true,
                             title: {
                                 display: true,
                                 text: 'Value (USD)',
-                                font: { size: 14, weight: 'bold' },
-                                color: '#1f2937'
+                                font: {
+                                    family: 'Inter',
+                                    size: 14,
+                                    weight: '600'
+                                },
+                                color: '#264653'
                             },
                             grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
+                                color: 'rgba(42, 157, 143, 0.1)'
                             },
                             ticks: {
+                                color: '#6b7280',
+                                font: {
+                                    family: 'Inter'
+                                },
                                 callback: function(value) {
-                                    return '$' + value.toLocaleString();
+                                    return '$' + value.toLocaleString('en-US');
                                 }
                             }
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
                     }
                 }
             });
         }
 
-        // Update financial indicators
         function updateIndicators() {
-            if (!selectedModel) {
-                document.getElementById('npvValue').textContent = '-';
-                document.getElementById('irrValue').textContent = '-';
-                document.getElementById('bcrValue').textContent = '-';
-                return;
-            }
-
-            const isDiscounted = document.getElementById('discountToggle').classList.contains('active');
-            const discountRate = parseFloat(document.getElementById('discountRate').value) / 100;
-            const densityPercentage = parseFloat(document.getElementById('densityPercentage').value);
-            const densityFactor = densityPercentage / dashboardData.base_density_percentage;
-
-            // Calculate cash flows with density adjustment
-            const cashFlows = selectedModel.cash_flow.map(item => {
-                let costs = item.costs * densityFactor;
-                let benefits = item.benefits * densityFactor;
-                let netFlow = benefits - costs;
-                
-                if (isDiscounted && item.year > 1) {
-                    netFlow *= Math.pow(1 + discountRate, -(item.year - 1));
-                }
-                
-                return netFlow;
-            });
-
+            if (!selectedModel || !selectedModel.cash_flow) return;
+            
+            const rate = discountRate / 100;
+            const densityFactor = currentDensity / 30;
+            
             // Calculate NPV
-            const npv = cashFlows.reduce((sum, flow) => sum + flow, 0);
-            document.getElementById('npvValue').textContent = '$' + npv.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-
-            // Calculate IRR (simplified Newton-Raphson method)
-            const irr = calculateIRR(cashFlows);
-            document.getElementById('irrValue').textContent = irr !== null ? (irr * 100).toFixed(1) + '%' : 'N/A';
-
-            // Calculate B/C Ratio with density adjustment
-            const totalBenefits = selectedModel.cash_flow.reduce((sum, item) => {
-                let benefit = item.benefits * densityFactor;
-                if (isDiscounted && item.year > 1) {
-                    benefit *= Math.pow(1 + discountRate, -(item.year - 1));
-                }
-                return sum + benefit;
-            }, 0);
-
-            const totalCosts = selectedModel.cash_flow.reduce((sum, item) => {
-                let cost = item.costs * densityFactor;
-                if (isDiscounted && item.year > 1) {
-                    cost *= Math.pow(1 + discountRate, -(item.year - 1));
-                }
-                return sum + cost;
-            }, 0);
-
-            const bcRatio = totalCosts > 0 ? totalBenefits / totalCosts : 0;
-            document.getElementById('bcrValue').textContent = bcRatio.toFixed(2);
-        }
-
-        // Calculate IRR using Newton-Raphson method
-        function calculateIRR(cashFlows) {
-            if (cashFlows.length === 0) return null;
+            let npv = 0;
+            selectedModel.cash_flow.forEach((item, index) => {
+                const year = item.year;
+                const cashFlow = item.net * densityFactor;
+                npv += cashFlow / Math.pow(1 + rate, year);
+            });
             
-            let rate = 0.1; // Initial guess
-            const maxIterations = 100;
-            const tolerance = 1e-6;
-            
-            for (let i = 0; i < maxIterations; i++) {
-                let npv = 0;
-                let dnpv = 0;
-                
-                for (let t = 0; t < cashFlows.length; t++) {
-                    npv += cashFlows[t] / Math.pow(1 + rate, t);
-                    dnpv -= t * cashFlows[t] / Math.pow(1 + rate, t + 1);
-                }
-                
-                if (Math.abs(npv) < tolerance) {
-                    return rate;
-                }
-                
-                if (dnpv === 0) {
-                    return null;
-                }
-                
-                rate = rate - npv / dnpv;
-                
-                // Prevent negative rates
-                if (rate < -0.99) {
-                    rate = -0.99;
-                }
+            // Calculate IRR (use correct values from economic_indicators.csv)
+            let irr = correctIRRValues[selectedModel.id];
+            if (irr === null || irr === undefined) {
+                irr = 0; // No IRR available
             }
             
-            return rate;
+            // Calculate BCR
+            let totalBenefits = 0;
+            let totalCosts = 0;
+            
+            selectedModel.cash_flow.forEach((item, index) => {
+                const year = item.year;
+                const discountFactor = Math.pow(1 + rate, year);
+                totalBenefits += (item.benefits * densityFactor) / discountFactor;
+                totalCosts += (item.costs * densityFactor) / discountFactor;
+            });
+            
+            const bcr = totalCosts > 0 ? totalBenefits / totalCosts : 0;
+            
+            // Update display (always in USD)
+            document.getElementById('npvValue').textContent = '$' + 
+                npv.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+            
+            if (irr > 0) {
+                document.getElementById('irrValue').textContent = 
+                    irr.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + '%';
+            } else {
+                document.getElementById('irrValue').textContent = 'N/A';
+            }
+            
+            document.getElementById('bcrValue').textContent = 
+                bcr.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
 
-        // Show error message
+        function clearChart() {
+            if (chart) {
+                chart.destroy();
+                chart = null;
+            }
+        }
+
+        function clearIndicators() {
+            document.getElementById('npvValue').textContent = '$0';
+            document.getElementById('irrValue').textContent = '0%';
+            document.getElementById('bcrValue').textContent = '0.00';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
         function showError(message) {
-            const container = document.querySelector('.container');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
+            const errorDiv = document.getElementById('error');
             errorDiv.textContent = message;
-            container.insertBefore(errorDiv, container.firstChild);
+            errorDiv.style.display = 'block';
         }
     </script>
 </body>
