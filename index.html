@@ -139,6 +139,63 @@
             outline: none;
         }
 
+        /* Toggle Switch Styling */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary-teal);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .toggle-label {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            user-select: none;
+        }
+
+        /* Hide original checkbox */
+        input[type="checkbox"].toggle-input {
+            display: none;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            accent-color: var(--primary-teal);
+            cursor: pointer;
+        }
+
         select:focus, input[type="number"]:focus {
             border-color: var(--primary-teal);
             box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.1);
@@ -391,21 +448,22 @@
         .chartjs-tooltip {
             opacity: 1;
             position: absolute;
-            background: rgba(38, 70, 83, 0.95);
+            background: rgba(38, 70, 83, 0.96);
             color: white;
-            border-radius: 8px;
-            border: 1px solid #2a9d8f;
-            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #2a9d8f;
+            padding: 20px;
             pointer-events: none;
             transform: translate(-50%, -50%);
             transition: all .1s ease;
             font-family: 'Inter', sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            max-width: 350px;
-            max-height: 350px;
+            font-size: 14px;
+            line-height: 1.6;
+            min-width: 400px;
+            max-width: 500px;
+            max-height: 500px;
             overflow-y: auto;
-            box-shadow: 0 10px 25px -5px rgba(38, 70, 83, 0.3);
+            box-shadow: 0 15px 35px -5px rgba(38, 70, 83, 0.4);
             z-index: 9999;
         }
 
@@ -492,6 +550,16 @@
                     <label for="discountRate">Discount Rate (%)</label>
                     <input type="number" id="discountRate" value="10" min="0" max="30" step="0.1" onchange="updateAnalysis()">
                 </div>
+                
+                <div class="form-group">
+                    <div class="toggle-container">
+                        <span class="toggle-label">Include Carbon Benefits</span>
+                        <input type="checkbox" id="includeCarbon" class="toggle-input" checked onchange="updateAnalysis()">
+                        <div class="toggle-switch active" onclick="toggleCarbonSwitch()" id="carbonToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -544,11 +612,13 @@
         let chart = null;
         let currentDensity = 30;
         let discountRate = 10;
+        let includeCarbon = true;
 
         // Chart colors using our theme
         const chartColors = {
             cost: '#e76f51',      // Secondary orange
             benefit: '#2a9d8f',   // Primary teal
+            carbon: '#6a994e',    // Green for carbon
             cashFlow: '#264653',  // Primary dark
             cumulative: '#e9c46a' // Accent yellow
         };
@@ -647,6 +717,24 @@
             document.getElementById('modelInfoCard').style.display = 'none';
         }
 
+        function toggleCarbonSwitch() {
+            const checkbox = document.getElementById('includeCarbon');
+            const toggleSwitch = document.getElementById('carbonToggle');
+            
+            // Toggle the checkbox state
+            checkbox.checked = !checkbox.checked;
+            
+            // Update the visual state
+            if (checkbox.checked) {
+                toggleSwitch.classList.add('active');
+            } else {
+                toggleSwitch.classList.remove('active');
+            }
+            
+            // Trigger the analysis update
+            updateAnalysis();
+        }
+
         function updateDensity() {
             const input = document.getElementById('densityInput');
             currentDensity = parseFloat(input.value);
@@ -662,6 +750,8 @@
             
             const rate = parseFloat(document.getElementById('discountRate').value) / 100;
             discountRate = rate * 100;
+            
+            includeCarbon = document.getElementById('includeCarbon').checked;
             
             updateChart();
             updateIndicators();
@@ -713,10 +803,30 @@
                 fill: false
             });
             
+            // Carbon data (only if enabled) with discount applied
+            if (includeCarbon) {
+                const carbonData = selectedModel.cash_flow.map(item => {
+                    const discountFactor = Math.pow(1 + rate, item.year);
+                    const carbonValue = item.carbon || 0;
+                    return (carbonValue * densityFactor) / discountFactor; // Apply discount
+                });
+                
+                datasets.push({
+                    label: 'Carbon',
+                    data: carbonData,
+                    borderColor: chartColors.carbon,
+                    backgroundColor: chartColors.carbon + '20',
+                    tension: 0.4,
+                    fill: false
+                });
+            }
+            
             // Cash flow data (net) with discount applied
             const cashFlowData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
-                return (item.net * densityFactor) / discountFactor; // Apply discount
+                const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
+                const totalNet = (item.benefits + carbonValue) - item.costs;
+                return (totalNet * densityFactor) / discountFactor; // Apply discount with carbon included if enabled
             });
             
             datasets.push({
@@ -783,8 +893,8 @@
                             footerSpacing: 6,
                             caretSize: 6,
                             multiKeyBackground: 'transparent',
-                            maxWidth: 320,
-                            maxHeight: 350,
+                            maxWidth: 450,
+                            maxHeight: 500,
                             yAlign: 'center',
                             position: 'average',
                             callbacks: {
@@ -832,8 +942,22 @@
                                         lines.push(`   Total: $${totalBenefits.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     }
                                     
+                                    // Carbon breakdown (only if enabled and available)
+                                    if (includeCarbon && yearData.carbon_details) {
+                                        lines.push('');
+                                        lines.push('CARBON:');
+                                        const carbonQuantity = yearData.carbon_details.quantity * densityFactor;
+                                        const carbonValue = (yearData.carbon_details.value * densityFactor) / discountFactor;
+                                        lines.push(`   Sequestration: ${carbonQuantity.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${yearData.carbon_details.unit}`);
+                                        lines.push(`   Price: $${yearData.carbon_details.price.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}/${yearData.carbon_details.unit.replace('/ha/year', '')}`);
+                                        lines.push(`   Revenue: $${carbonValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
+                                    }
+                                    
                                     // Net cash flow
-                                    const netCashFlow = (yearData.net * densityFactor) / discountFactor;
+                                    const carbonValue = (includeCarbon && yearData.carbon_details) ? (yearData.carbon_details.value * densityFactor) / discountFactor : 0;
+                                    const totalBenefitsIncCarbon = (yearData.benefits * densityFactor) / discountFactor + carbonValue;
+                                    const totalCosts = (yearData.costs * densityFactor) / discountFactor;
+                                    const netCashFlow = totalBenefitsIncCarbon - totalCosts;
                                     lines.push('');
                                     lines.push(`NET CASH FLOW: $${netCashFlow.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     
@@ -904,11 +1028,13 @@
             const rate = discountRate / 100;
             const densityFactor = currentDensity / 30;
             
-            // Calculate NPV
+            // Calculate NPV (including carbon if enabled)
             let npv = 0;
             selectedModel.cash_flow.forEach((item, index) => {
                 const year = item.year;
-                const cashFlow = item.net * densityFactor;
+                const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
+                const totalNet = (item.benefits + carbonValue) - item.costs;
+                const cashFlow = totalNet * densityFactor;
                 npv += cashFlow / Math.pow(1 + rate, year);
             });
             
@@ -918,14 +1044,15 @@
                 irr = 0; // No IRR available
             }
             
-            // Calculate BCR
+            // Calculate BCR (including carbon if enabled)
             let totalBenefits = 0;
             let totalCosts = 0;
             
             selectedModel.cash_flow.forEach((item, index) => {
                 const year = item.year;
                 const discountFactor = Math.pow(1 + rate, year);
-                totalBenefits += (item.benefits * densityFactor) / discountFactor;
+                const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
+                totalBenefits += ((item.benefits + carbonValue) * densityFactor) / discountFactor;
                 totalCosts += (item.costs * densityFactor) / discountFactor;
             });
             
