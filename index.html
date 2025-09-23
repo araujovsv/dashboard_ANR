@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANR Cost-Benefit Analysis - Dashboard</title>
+    <title>ANR Cost-Benefit Analysis</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -306,7 +307,7 @@
 
         .model-info {
             background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-teal) 100%);
-            color: white;
+            color: rgb(255, 255, 255);
             padding: 2rem;
             border-radius: 16px;
             margin-bottom: 1rem;
@@ -354,7 +355,7 @@
 
         .chart-container {
             position: relative;
-            height: 400px;
+            height: 550px;
             margin-top: 1rem;
         }
 
@@ -444,27 +445,29 @@
             background: var(--primary-dark);
         }
 
-        /* Custom Chart.js tooltip styling */
+        /* Custom Chart.js tooltip styling - BALANCED VERSION */
         .chartjs-tooltip {
             opacity: 1;
             position: absolute;
-            background: rgba(38, 70, 83, 0.96);
+            background: rgba(38, 70, 83, 0.97);
             color: white;
             border-radius: 12px;
             border: 2px solid #2a9d8f;
             padding: 20px;
             pointer-events: none;
             transform: translate(-50%, -50%);
-            transition: all .1s ease;
+            transition: all .2s ease;
             font-family: 'Inter', sans-serif;
-            font-size: 14px;
+            font-size: 11px;
+            font-weight: 400;
             line-height: 1.6;
-            min-width: 400px;
-            max-width: 500px;
-            max-height: 500px;
+            min-width: 500px;
+            max-width: 650px;
+            min-height: 300px;
+            max-height: 600px;
             overflow-y: auto;
-            box-shadow: 0 15px 35px -5px rgba(38, 70, 83, 0.4);
-            z-index: 9999;
+            box-shadow: 0 15px 40px -5px rgba(38, 70, 83, 0.5);
+            z-index: 10000;
         }
 
         .chartjs-tooltip .tooltip-title {
@@ -529,7 +532,7 @@
         <div class="header">
             <div class="header-icon">🌱</div>
             <h1>ANR Cost-Benefit Analysis</h1>
-            <p class="subtitle">Interactive Financial Analysis Dashboard for Assisted Natural Regeneration Models</p>
+            <p class="subtitle">Interactive Analysis Dashboard for Assisted Natural Regeneration (ANR) Models</p>
         </div>
 
         <div class="controls-section">
@@ -548,7 +551,7 @@
                 
                 <div class="form-group">
                     <label for="discountRate">Discount Rate (%)</label>
-                    <input type="number" id="discountRate" value="10" min="0" max="30" step="0.1" onchange="updateAnalysis()">
+                    <input type="number" id="discountRate" value="10" min="0" max="30" step="1" onchange="updateAnalysis()">
                 </div>
                 
                 <div class="form-group">
@@ -576,7 +579,7 @@
                     <h3 id="modelTitle">Selected Model</h3>
                     <p><strong>Country:</strong> <span id="modelCountry">-</span></p>
                     <p><strong>Species:</strong> <span id="modelSpecies">-</span></p>
-                    <p><strong>Current Density:</strong> <span id="currentDensity">30%</span></p>
+                    <p><strong>Density:</strong> <span id="currentDensity">30%</span></p>
                 </div>
                 
                 <div class="indicator-card npv">
@@ -611,6 +614,171 @@
         let selectedModel = null;
         let chart = null;
         let currentDensity = 30;
+        
+        // Categories that should NOT be affected by density changes
+        const densityExemptCategories = [
+            "Ant control",
+            "Fence",
+            "Fence installation", 
+            "Fire protection",
+            "Hoeing",
+            "Limestone",
+            "Limestone application",
+            "Technical Assistance",
+            "Tax"
+        ];
+        
+        // Base density values for each model (trees/ha at 30% scenario)
+        const baseDensityValues = {
+            44: 18,    // Ghana - Vitellaria paradoxa (Shea)
+            27: 1350,  // Ethiopia - Coffea arabica (Coffee)
+            29: 3150,  // Ethiopia - Coffea arabica (Coffee)
+            11: 120,   // Ghana - Vitellaria paradoxa (Shea)
+            31: 60,    // Nigeria - Vitellaria paradoxa (Shea)
+            38: 188,   // Nigeria - Vitellaria paradoxa (Shea)
+            49: 180,   // Brazil - Bertholletia excelsa (Brazil Nut)
+            30: 60,    // Nigeria - Vitellaria paradoxa (Shea)
+            45: 15,    // Ghana - Vitellaria paradoxa (Shea)
+            47: 150,   // Brazil - Bertholletia excelsa (Brazil Nut)
+            28: 10500, // Ethiopia - Coffea arabica (Coffee)
+            43: 30,    // Ghana - Vitellaria paradoxa (Shea)
+            50: 200,   // Brazil - Bertholletia excelsa (Brazil Nut)
+            51: 188    // Nigeria - Vitellaria paradoxa (Shea)
+        };
+        
+        // Exchange rates (PPP - World Bank) for currency conversion
+        const exchangeRates = {
+            "BRL": 2.48, // Brazilian Real to USD (PPP)
+            "NGN": 223.5  // Nigerian Naira to USD (PPP)
+        };
+        
+        // Function to calculate density-adjusted costs for a cash flow item
+        function calculateDensityAdjustedCosts(item) {
+            if (!item.cost_details || !selectedModel) {
+                // If no cost_details, apply density to all costs (original behavior)
+                const baseDensity = baseDensityValues[selectedModel.id] || 30;
+                const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+                return item.costs * (currentAbsoluteDensity / baseDensity);
+            }
+            
+            const baseDensity = baseDensityValues[selectedModel.id] || 30;
+            const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+            const densityFactor = currentAbsoluteDensity / baseDensity;
+            
+            let densityAdjustedCosts = 0;
+            item.cost_details.forEach(cost => {
+                if (densityExemptCategories.includes(cost.category)) {
+                    // This category should not be affected by density
+                    densityAdjustedCosts += cost.amount;
+                } else {
+                    // Apply density adjustment: Original * (CurrentDensity/BaseDensity)
+                    densityAdjustedCosts += cost.amount * densityFactor;
+                }
+            });
+            
+            return densityAdjustedCosts;
+        }
+        
+        // Function to calculate density-adjusted benefits for a cash flow item
+        function calculateDensityAdjustedBenefits(item) {
+            if (!item.benefit_details || !selectedModel) {
+                // If no benefit_details, apply density to all benefits except carbon
+                const baseDensity = baseDensityValues[selectedModel.id] || 30;
+                const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+                return item.benefits * (currentAbsoluteDensity / baseDensity);
+            }
+            
+            const baseDensity = baseDensityValues[selectedModel.id] || 30;
+            const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+            const densityFactor = currentAbsoluteDensity / baseDensity;
+            
+            let densityAdjustedBenefits = 0;
+            item.benefit_details.forEach(benefit => {
+                if (benefit.product === "Carbon") {
+                    // Carbon benefits should not be affected by density
+                    densityAdjustedBenefits += benefit.value;
+                } else {
+                    // Apply density adjustment: Original * (CurrentDensity/BaseDensity)
+                    densityAdjustedBenefits += benefit.value * densityFactor;
+                }
+            });
+            
+            return densityAdjustedBenefits;
+        }
+        
+        // Function to calculate IRR dynamically using Newton-Raphson method
+        function calculateDynamicIRR(cashFlows, includeCarbon) {
+            // Calculate net cash flows for each year with current density and carbon settings
+            const netCashFlows = cashFlows.map(item => {
+                const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
+                return (densityAdjustedBenefits + carbonValue) - densityAdjustedCosts;
+            });
+            
+            // Check if we have negative initial cash flow (typical investment pattern)
+            const hasNegativeStart = netCashFlows[0] < 0;
+            const hasPositiveFlows = netCashFlows.some(cf => cf > 0);
+            
+            // If all cash flows are negative or all positive, no meaningful IRR exists
+            if (!hasNegativeStart || !hasPositiveFlows) {
+                return null;
+            }
+            
+            // Calculate total net cash flow to check if project is profitable
+            const totalNet = netCashFlows.reduce((sum, cf) => sum + cf, 0);
+            if (totalNet <= 0) {
+                return null; // Project is not profitable, no positive IRR
+            }
+            
+            // Newton-Raphson method to find IRR
+            let irr = 0.1; // Start with 10% guess
+            const maxIterations = 50;
+            const tolerance = 1e-6;
+            
+            for (let i = 0; i < maxIterations; i++) {
+                let npv = 0;
+                let dnpv = 0; // Derivative of NPV
+                
+                netCashFlows.forEach((cashFlow, year) => {
+                    if (year === 0) {
+                        npv += cashFlow; // No discounting for year 0
+                        dnpv += 0; // Derivative is 0 for year 0
+                    } else {
+                        const discountFactor = Math.pow(1 + irr, year);
+                        npv += cashFlow / discountFactor;
+                        dnpv -= cashFlow * year / Math.pow(1 + irr, year + 1);
+                    }
+                });
+                
+                // Check for convergence
+                if (Math.abs(npv) < tolerance) {
+                    return Math.max(0, irr * 100); // Convert to percentage, ensure non-negative
+                }
+                
+                // Check for degenerate case
+                if (Math.abs(dnpv) < tolerance) {
+                    break;
+                }
+                
+                // Newton-Raphson update
+                const newIrr = irr - npv / dnpv;
+                
+                // Constrain IRR to reasonable bounds
+                if (newIrr < -0.95 || newIrr > 5) {
+                    break;
+                }
+                
+                irr = newIrr;
+            }
+            
+            // Return result if reasonable, otherwise null
+            if (irr >= 0 && irr <= 500) { // Up to 500% IRR
+                return irr * 100;
+            }
+            
+            return null;
+        }
         let discountRate = 10;
         let includeCarbon = true;
 
@@ -708,7 +876,28 @@
             title.textContent = selectedModel.target_species;
             country.textContent = selectedModel.country;
             species.textContent = selectedModel.target_species;
-            density.textContent = currentDensity + '%';
+            
+            // Calculate current absolute density
+            const baseDensity = baseDensityValues[selectedModel.id] || 30;
+            const currentAbsoluteDensity = Math.round(baseDensity * (currentDensity / 30));
+            density.textContent = currentAbsoluteDensity + ' trees/ha';
+            
+            // Add exchange rate information for Brazil and Nigeria
+            let exchangeRateInfo = '';
+            if (selectedModel.country === 'Brazil' && selectedModel.currency !== 'USD') {
+                const rate = exchangeRates['BRL'];
+                exchangeRateInfo = `<br><small style="color: #ffffff; font-size: 12px;">Exchange Rate: 1 USD = ${rate} BRL (PPP - World Bank)</small>`;
+            } else if (selectedModel.country === 'Nigeria' && selectedModel.currency !== 'USD') {
+                const rate = exchangeRates['NGN'];
+                exchangeRateInfo = `<br><small style="color: #ffffff; font-size: 12px;">Exchange Rate: 1 USD = ${rate} NGN (PPP - World Bank)</small>`;
+            }
+            
+            // Update species display with exchange rate if applicable
+            if (exchangeRateInfo) {
+                species.innerHTML = selectedModel.target_species + exchangeRateInfo;
+            } else {
+                species.textContent = selectedModel.target_species;
+            }
             
             infoCard.style.display = 'block';
         }
@@ -740,7 +929,10 @@
             currentDensity = parseFloat(input.value);
             
             if (selectedModel) {
-                document.getElementById('currentDensity').textContent = currentDensity + '%';
+                // Update absolute density display
+                const baseDensity = baseDensityValues[selectedModel.id] || 30;
+                const currentAbsoluteDensity = Math.round(baseDensity * (currentDensity / 30));
+                document.getElementById('currentDensity').textContent = currentAbsoluteDensity + ' trees/ha';
                 updateAnalysis();
             }
         }
@@ -770,13 +962,13 @@
             const years = selectedModel.cash_flow.map(item => item.year);
             
             // Always show all three series
-            const densityFactor = currentDensity / 30;
             const rate = discountRate / 100;
             
-            // Cost data (positive values now) with discount applied
+            // Cost data (positive values now) with discount applied and density-adjusted
             const costData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
-                return (item.costs * densityFactor) / discountFactor; // Apply discount
+                const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
+                return densityAdjustedCosts / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -788,10 +980,11 @@
                 fill: false
             });
             
-            // Benefit data with discount applied
+            // Benefit data with discount applied and density-adjusted
             const benefitData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
-                return (item.benefits * densityFactor) / discountFactor; // Apply discount
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                return densityAdjustedBenefits / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -803,12 +996,12 @@
                 fill: false
             });
             
-            // Carbon data (only if enabled) with discount applied
+            // Carbon data (only if enabled) with discount applied - Carbon is not affected by density
             if (includeCarbon) {
                 const carbonData = selectedModel.cash_flow.map(item => {
                     const discountFactor = Math.pow(1 + rate, item.year);
                     const carbonValue = item.carbon || 0;
-                    return (carbonValue * densityFactor) / discountFactor; // Apply discount
+                    return carbonValue / discountFactor; // Apply discount (no density factor for carbon)
                 });
                 
                 datasets.push({
@@ -821,12 +1014,14 @@
                 });
             }
             
-            // Cash flow data (net) with discount applied
+            // Cash flow data (net) with discount applied and proper density adjustments
             const cashFlowData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
                 const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
-                const totalNet = (item.benefits + carbonValue) - item.costs;
-                return (totalNet * densityFactor) / discountFactor; // Apply discount with carbon included if enabled
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
+                const totalNet = (densityAdjustedBenefits + carbonValue) - densityAdjustedCosts;
+                return totalNet / discountFactor; // Apply discount
             });
             
             datasets.push({
@@ -874,9 +1069,9 @@
                             borderWidth: 2,
                             cornerRadius: 12,
                             displayColors: false,
-                            padding: 20,
+                            padding: 15,
                             titleFont: {
-                                size: 16,
+                                size: 14,
                                 weight: 'bold',
                                 family: 'Inter'
                             },
@@ -885,16 +1080,16 @@
                                 family: 'Inter'
                             },
                             footerFont: {
-                                size: 11,
+                                size: 10,
                                 family: 'Inter'
                             },
-                            bodySpacing: 4,
-                            titleSpacing: 8,
-                            footerSpacing: 6,
-                            caretSize: 6,
+                            bodySpacing: 2,
+                            titleSpacing: 6,
+                            footerSpacing: 8,
+                            caretSize: 8,
                             multiKeyBackground: 'transparent',
-                            maxWidth: 450,
-                            maxHeight: 500,
+                            maxWidth: 700,
+                            maxHeight: 650,
                             yAlign: 'center',
                             position: 'average',
                             callbacks: {
@@ -907,33 +1102,57 @@
                                 afterBody: function(tooltipItems) {
                                     const yearIndex = tooltipItems[0].dataIndex;
                                     const yearData = selectedModel.cash_flow[yearIndex];
-                                    const densityFactor = currentDensity / 30;
                                     const rate = discountRate / 100;
                                     const discountFactor = Math.pow(1 + rate, yearData.year);
                                     
                                     let lines = [];
                                     
-                                    // Cost breakdown
+                                    // Cost breakdown using density-adjusted function
                                     if (yearData.cost_details && yearData.cost_details.length > 0) {
                                         lines.push('');
                                         lines.push('COST BREAKDOWN:');
                                         let totalCosts = 0;
+                                        
+                                        const baseDensity = baseDensityValues[selectedModel.id] || 30;
+                                        const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+                                        const densityFactor = currentAbsoluteDensity / baseDensity;
+                                        
                                         yearData.cost_details.forEach(cost => {
-                                            const adjustedAmount = (cost.amount * densityFactor) / discountFactor;
+                                            let adjustedAmount;
+                                            if (densityExemptCategories.includes(cost.category)) {
+                                                // This category should not be affected by density
+                                                adjustedAmount = cost.amount / discountFactor;
+                                            } else {
+                                                // Apply density adjustment: Original * (CurrentDensity/BaseDensity)
+                                                adjustedAmount = (cost.amount * densityFactor) / discountFactor;
+                                            }
                                             totalCosts += adjustedAmount;
                                             lines.push(`   ${cost.category}: $${adjustedAmount.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                         });
                                         lines.push(`   Total: $${totalCosts.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     }
                                     
-                                    // Benefit breakdown
+                                    // Benefit breakdown using density-adjusted function
                                     if (yearData.benefit_details && yearData.benefit_details.length > 0) {
                                         lines.push('');
                                         lines.push('BENEFITS:');
                                         let totalBenefits = 0;
+                                        
+                                        const baseDensity = baseDensityValues[selectedModel.id] || 30;
+                                        const currentAbsoluteDensity = baseDensity * (currentDensity / 30);
+                                        const densityFactor = currentAbsoluteDensity / baseDensity;
+                                        
                                         yearData.benefit_details.forEach(benefit => {
-                                            const adjustedQuantity = benefit.quantity * densityFactor;
-                                            const adjustedValue = (benefit.value * densityFactor) / discountFactor;
+                                            let adjustedQuantity, adjustedValue;
+                                            if (benefit.product === "Carbon") {
+                                                // Carbon benefits should not be affected by density
+                                                adjustedQuantity = benefit.quantity;
+                                                adjustedValue = benefit.value / discountFactor;
+                                            } else {
+                                                // Apply density adjustment: Original * (CurrentDensity/BaseDensity)
+                                                adjustedQuantity = benefit.quantity * densityFactor;
+                                                adjustedValue = (benefit.value * densityFactor) / discountFactor;
+                                            }
                                             totalBenefits += adjustedValue;
                                             lines.push(`   Harvest: ${adjustedQuantity.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${benefit.unit || 'units'}`);
                                             lines.push(`   Unit Price: $${benefit.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/${benefit.unit || 'unit'}`);
@@ -942,22 +1161,22 @@
                                         lines.push(`   Total: $${totalBenefits.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     }
                                     
-                                    // Carbon breakdown (only if enabled and available)
+                                    // Carbon breakdown (only if enabled and available) - Carbon is not affected by density
                                     if (includeCarbon && yearData.carbon_details) {
                                         lines.push('');
                                         lines.push('CARBON:');
-                                        const carbonQuantity = yearData.carbon_details.quantity * densityFactor;
-                                        const carbonValue = (yearData.carbon_details.value * densityFactor) / discountFactor;
+                                        const carbonQuantity = yearData.carbon_details.quantity; // No density factor for carbon
+                                        const carbonValue = yearData.carbon_details.value / discountFactor; // No density factor for carbon
                                         lines.push(`   Sequestration: ${carbonQuantity.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1})} ${yearData.carbon_details.unit}`);
                                         lines.push(`   Price: $${yearData.carbon_details.price.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}/${yearData.carbon_details.unit.replace('/ha/year', '')}`);
                                         lines.push(`   Revenue: $${carbonValue.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     }
                                     
-                                    // Net cash flow
-                                    const carbonValue = (includeCarbon && yearData.carbon_details) ? (yearData.carbon_details.value * densityFactor) / discountFactor : 0;
-                                    const totalBenefitsIncCarbon = (yearData.benefits * densityFactor) / discountFactor + carbonValue;
-                                    const totalCosts = (yearData.costs * densityFactor) / discountFactor;
-                                    const netCashFlow = totalBenefitsIncCarbon - totalCosts;
+                                    // Net cash flow using proper density adjustments
+                                    const carbonValue = (includeCarbon && yearData.carbon_details) ? yearData.carbon_details.value / discountFactor : 0; // No density for carbon
+                                    const densityAdjustedBenefits = calculateDensityAdjustedBenefits(yearData) / discountFactor;
+                                    const densityAdjustedCosts = calculateDensityAdjustedCosts(yearData) / discountFactor;
+                                    const netCashFlow = (densityAdjustedBenefits + carbonValue) - densityAdjustedCosts;
                                     lines.push('');
                                     lines.push(`NET CASH FLOW: $${netCashFlow.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`);
                                     
@@ -1026,25 +1245,25 @@
             if (!selectedModel || !selectedModel.cash_flow) return;
             
             const rate = discountRate / 100;
-            const densityFactor = currentDensity / 30;
             
-            // Calculate NPV (including carbon if enabled)
+            // Calculate NPV (including carbon if enabled) with proper density adjustments
             let npv = 0;
             selectedModel.cash_flow.forEach((item, index) => {
                 const year = item.year;
                 const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
-                const totalNet = (item.benefits + carbonValue) - item.costs;
-                const cashFlow = totalNet * densityFactor;
-                npv += cashFlow / Math.pow(1 + rate, year);
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
+                const totalNet = (densityAdjustedBenefits + carbonValue) - densityAdjustedCosts;
+                npv += totalNet / Math.pow(1 + rate, year);
             });
             
-            // Calculate IRR (use correct values from economic_indicators.csv)
-            let irr = correctIRRValues[selectedModel.id];
-            if (irr === null || irr === undefined) {
+            // Calculate IRR dynamically based on current density and carbon settings
+            let irr = calculateDynamicIRR(selectedModel.cash_flow, includeCarbon);
+            if (irr === null || irr === undefined || isNaN(irr)) {
                 irr = 0; // No IRR available
             }
             
-            // Calculate BCR (including carbon if enabled)
+            // Calculate BCR (including carbon if enabled) with proper density adjustments
             let totalBenefits = 0;
             let totalCosts = 0;
             
@@ -1052,8 +1271,10 @@
                 const year = item.year;
                 const discountFactor = Math.pow(1 + rate, year);
                 const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
-                totalBenefits += ((item.benefits + carbonValue) * densityFactor) / discountFactor;
-                totalCosts += (item.costs * densityFactor) / discountFactor;
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
+                totalBenefits += (densityAdjustedBenefits + carbonValue) / discountFactor;
+                totalCosts += densityAdjustedCosts / discountFactor;
             });
             
             const bcr = totalCosts > 0 ? totalBenefits / totalCosts : 0;
