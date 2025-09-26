@@ -525,17 +525,110 @@
             background: rgba(42, 157, 143, 0.2);
             color: var(--primary-dark);
         }
+
+        /* Footer styling */
+        .footer {
+            margin-top: 4rem;
+            padding: 2rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+
+        .footer p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .footer .logo-link {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .footer .logo-link:hover {
+            transform: scale(1.05);
+        }
+
+        .footer .logo-link img {
+            height: 100px;
+            width: auto;
+        }
+
+        /* Price controls styling */
+        .price-controls {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .price-controls h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .price-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .price-input-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+        }
+
+        .price-input-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        .price-input-group input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .price-input-group input:focus {
+            outline: none;
+            border-color: var(--primary-teal);
+            box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.1);
+        }
+
+        .price-section-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 1rem;
+            min-width: 100px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-icon">🌱</div>
             <h1>ANR Cost-Benefit Analysis</h1>
             <p class="subtitle">Interactive Analysis Dashboard for Assisted Natural Regeneration (ANR) Models</p>
         </div>
 
         <div class="controls-section">
+            <h3 style="color: var(--text-primary); margin-bottom: 1.5rem; font-size: 1.2rem; font-weight: 600; text-align: center;">
+                🌱 Model Selection
+            </h3>
             <div class="controls-grid">
                 <div class="form-group">
                     <label for="modelSelect">ANR Model</label>
@@ -562,6 +655,39 @@
                             <div class="toggle-slider"></div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Controls Section -->
+        <div class="price-controls" id="priceControls" style="display: none;">
+            <h3>🏷️ Price Settings</h3>
+            
+            <!-- NTFP Prices -->
+            <div class="price-section">
+                <div class="price-section-title">NTFP Products:</div>
+                <div class="price-input-group">
+                    <label for="ntfpPrice">Initial Price ($/unit)</label>
+                    <input type="number" id="ntfpPrice" step="0.01" min="0" value="0" onchange="updatePrices()">
+                    <small id="ntfpCurrentPrice" style="color: #6b7280; font-size: 11px;">Current: $0.00</small>
+                </div>
+                <div class="price-input-group">
+                    <label for="ntfpGrowthRate">Annual Growth Rate (%)</label>
+                    <input type="number" id="ntfpGrowthRate" step="0.1" min="-10" max="50" value="0" onchange="updatePrices()">
+                </div>
+            </div>
+
+            <!-- Carbon Prices -->
+            <div class="price-section">
+                <div class="price-section-title">Carbon Credits:</div>
+                <div class="price-input-group">
+                    <label for="carbonPrice">Initial Price ($/tCO2)</label>
+                    <input type="number" id="carbonPrice" step="0.01" min="0" value="6" onchange="updatePrices()">
+                    <small id="carbonCurrentPrice" style="color: #6b7280; font-size: 11px;">Current: $6.00</small>
+                </div>
+                <div class="price-input-group">
+                    <label for="carbonGrowthRate">Annual Growth Rate (%)</label>
+                    <input type="number" id="carbonGrowthRate" step="0.1" min="-10" max="50" value="0" onchange="updatePrices()">
                 </div>
             </div>
         </div>
@@ -599,6 +725,8 @@
             </div>
         </div>
 
+
+
         <div id="loading" class="loading">
             Loading model data...
         </div>
@@ -608,12 +736,25 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Developed by:</p>
+        <a href="https://www.conservation-strategy.org" target="_blank" class="logo-link">
+            <img src="CSF logo black.png" alt="Conservation Strategy Fund" />
+        </a>
+    </footer>
+
     <script>
         // Global variables
         let dashboardData = null;
         let selectedModel = null;
         let chart = null;
         let currentDensity = 30;
+        let ntfpPrice = 0;
+        let ntfpGrowthRate = 0;
+        let carbonPrice = 6;
+        let carbonGrowthRate = 0;
+        let useOriginalPrices = true; // Flag to track if user has modified prices
         
         // Categories that should NOT be affected by density changes
         const densityExemptCategories = [
@@ -679,8 +820,8 @@
             return densityAdjustedCosts;
         }
         
-        // Function to calculate density-adjusted benefits for a cash flow item
-        function calculateDensityAdjustedBenefits(item) {
+        // Function to calculate density-adjusted benefits for a cash flow item with dynamic pricing
+        function calculateDensityAdjustedBenefits(item, year = null) {
             if (!item.benefit_details || !selectedModel) {
                 // If no benefit_details, apply density to all benefits except carbon
                 const baseDensity = baseDensityValues[selectedModel.id] || 30;
@@ -695,15 +836,49 @@
             let densityAdjustedBenefits = 0;
             item.benefit_details.forEach(benefit => {
                 if (benefit.product === "Carbon") {
-                    // Carbon benefits should not be affected by density
-                    densityAdjustedBenefits += benefit.value;
+                    // Carbon benefits should not be affected by density, but use dynamic pricing
+                    const yearIndex = year !== null ? year : item.year - 1;
+                    let dynamicPrice;
+                    if (useOriginalPrices) {
+                        // Use original carbon price from JSON (always in USD)
+                        dynamicPrice = benefit.price * Math.pow(1 + carbonGrowthRate / 100, yearIndex);
+                    } else {
+                        // Use user-modified price
+                        dynamicPrice = carbonPrice * Math.pow(1 + carbonGrowthRate / 100, yearIndex);
+                    }
+                    densityAdjustedBenefits += benefit.quantity * dynamicPrice;
                 } else {
-                    // Apply density adjustment: Original * (CurrentDensity/BaseDensity)
-                    densityAdjustedBenefits += benefit.value * densityFactor;
+                    // Apply density adjustment and dynamic pricing: Quantity * DensityFactor * DynamicPrice
+                    const yearIndex = year !== null ? year : item.year - 1;
+                    let dynamicPrice;
+                    if (useOriginalPrices) {
+                        // Use original NTFP price from JSON (in local currency)
+                        dynamicPrice = benefit.price * Math.pow(1 + ntfpGrowthRate / 100, yearIndex);
+                    } else {
+                        // Use user-modified price (in USD)
+                        dynamicPrice = ntfpPrice * Math.pow(1 + ntfpGrowthRate / 100, yearIndex);
+                    }
+                    densityAdjustedBenefits += benefit.quantity * densityFactor * dynamicPrice;
                 }
             });
             
             return densityAdjustedBenefits;
+        }
+
+        // Function to calculate carbon benefits with dynamic pricing (for separate carbon calculations)
+        function calculateDynamicCarbonValue(item, year = null) {
+            if (!item.carbon_details) return 0;
+            
+            const yearIndex = year !== null ? year : item.year - 1;
+            let dynamicPrice;
+            if (useOriginalPrices) {
+                // Use original carbon price from JSON (always in USD)
+                dynamicPrice = item.carbon_details.price * Math.pow(1 + carbonGrowthRate / 100, yearIndex);
+            } else {
+                // Use user-modified price
+                dynamicPrice = carbonPrice * Math.pow(1 + carbonGrowthRate / 100, yearIndex);
+            }
+            return item.carbon_details.quantity * dynamicPrice;
         }
         
         // Function to calculate IRR dynamically using Newton-Raphson method
@@ -900,6 +1075,9 @@
             }
             
             infoCard.style.display = 'block';
+            
+            // Initialize price controls
+            initializePriceControls();
         }
 
         function hideModelInfo() {
@@ -935,6 +1113,113 @@
                 document.getElementById('currentDensity').textContent = currentAbsoluteDensity + ' trees/ha';
                 updateAnalysis();
             }
+        }
+
+        function updatePrices() {
+            // Get values from inputs
+            ntfpPrice = parseFloat(document.getElementById('ntfpPrice').value) || 0;
+            ntfpGrowthRate = parseFloat(document.getElementById('ntfpGrowthRate').value) || 0;
+            carbonPrice = parseFloat(document.getElementById('carbonPrice').value) || 6;
+            carbonGrowthRate = parseFloat(document.getElementById('carbonGrowthRate').value) || 0;
+            
+            // Mark that user has modified prices
+            useOriginalPrices = false;
+            
+            if (selectedModel) {
+                updateAnalysis();
+            }
+        }
+
+        function initializePriceControls() {
+            if (!selectedModel) return;
+            
+            // Find the first NTFP price in the model to use as suggested price
+            let suggestedNTFPPrice = 0;
+            let currentCarbonPrice = 6;
+            
+            if (selectedModel.cash_flow && selectedModel.cash_flow.length > 0) {
+                // Search through all years to find the first one with NTFP products
+                for (let yearData of selectedModel.cash_flow) {
+                    if (yearData.benefit_details && yearData.benefit_details.length > 0) {
+                        const ntfpBenefit = yearData.benefit_details.find(b => b.product !== "Carbon");
+                        if (ntfpBenefit) {
+                            suggestedNTFPPrice = ntfpBenefit.price || 0;
+                            break; // Found NTFP price, stop searching
+                        }
+                    }
+                }
+                
+                // Get carbon price from first year carbon_details
+                const firstYear = selectedModel.cash_flow[0];
+                if (firstYear.carbon_details) {
+                    currentCarbonPrice = firstYear.carbon_details.price || 6;
+                }
+            }
+            
+            // Convert NTFP prices to USD if necessary (carbon is always in USD)
+            if (selectedModel.currency === 'Real') {
+                const rate = exchangeRates['BRL'];
+                suggestedNTFPPrice = suggestedNTFPPrice / rate;
+                // currentCarbonPrice stays the same - already in USD
+            } else if (selectedModel.currency === 'Naira') {
+                const rate = exchangeRates['NGN'];
+                suggestedNTFPPrice = suggestedNTFPPrice / rate;
+                // currentCarbonPrice stays the same - already in USD
+            }
+            
+            // Show price controls first
+            document.getElementById('priceControls').style.display = 'block';
+            
+            // Use setTimeout to ensure elements are rendered
+            setTimeout(() => {
+                // Set initial values (rounded to 2 decimal places)
+                const ntfpPriceInput = document.getElementById('ntfpPrice');
+                const ntfpGrowthInput = document.getElementById('ntfpGrowthRate');
+                const carbonPriceInput = document.getElementById('carbonPrice');
+                const carbonGrowthInput = document.getElementById('carbonGrowthRate');
+                
+                if (ntfpPriceInput) ntfpPriceInput.value = parseFloat(suggestedNTFPPrice.toFixed(2));
+                if (ntfpGrowthInput) ntfpGrowthInput.value = 0;
+                if (carbonPriceInput) carbonPriceInput.value = parseFloat(currentCarbonPrice.toFixed(2));
+                if (carbonGrowthInput) carbonGrowthInput.value = 0;
+                
+                // Update current price displays
+                const ntfpCurrentPriceEl = document.getElementById('ntfpCurrentPrice');
+                const carbonCurrentPriceEl = document.getElementById('carbonCurrentPrice');
+                
+                // Prepare display text with proper formatting
+                let ntfpDisplayText = `Current: $${suggestedNTFPPrice.toFixed(2)}`;
+                let carbonDisplayText = `Current: $${currentCarbonPrice.toFixed(2)}`;
+                
+                // Add original currency info ONLY for NTFP products if converted
+                if (selectedModel.currency === 'Real') {
+                    const originalNTFPPrice = suggestedNTFPPrice * exchangeRates['BRL'];
+                    ntfpDisplayText += ` (${originalNTFPPrice.toFixed(2)} BRL)`;
+                    // Carbon is already in USD, no conversion needed
+                } else if (selectedModel.currency === 'Naira') {
+                    const originalNTFPPrice = suggestedNTFPPrice * exchangeRates['NGN'];
+                    ntfpDisplayText += ` (${originalNTFPPrice.toFixed(0)} NGN)`;
+                    // Carbon is already in USD, no conversion needed
+                }
+                
+                if (ntfpCurrentPriceEl) {
+                    ntfpCurrentPriceEl.textContent = ntfpDisplayText;
+                    ntfpCurrentPriceEl.style.color = '#059669'; // Green color for visibility
+                    ntfpCurrentPriceEl.style.fontWeight = '600';
+                }
+                
+                if (carbonCurrentPriceEl) {
+                    carbonCurrentPriceEl.textContent = carbonDisplayText;
+                    carbonCurrentPriceEl.style.color = '#059669'; // Green color for visibility
+                    carbonCurrentPriceEl.style.fontWeight = '600';
+                }
+                
+                // Reset to use original prices from JSON
+                useOriginalPrices = true;
+                ntfpGrowthRate = 0;
+                carbonGrowthRate = 0;
+                
+            }, 100); // 100ms delay to ensure DOM is ready
         }
 
         function updateAnalysis() {
@@ -980,10 +1265,10 @@
                 fill: false
             });
             
-            // Benefit data with discount applied and density-adjusted
+            // Benefit data with discount applied, density-adjusted and dynamic pricing
             const benefitData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
-                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item, item.year - 1);
                 return densityAdjustedBenefits / discountFactor; // Apply discount
             });
             
@@ -996,12 +1281,12 @@
                 fill: false
             });
             
-            // Carbon data (only if enabled) with discount applied - Carbon is not affected by density
+            // Carbon data (only if enabled) with discount applied and dynamic pricing
             if (includeCarbon) {
                 const carbonData = selectedModel.cash_flow.map(item => {
                     const discountFactor = Math.pow(1 + rate, item.year);
-                    const carbonValue = item.carbon || 0;
-                    return carbonValue / discountFactor; // Apply discount (no density factor for carbon)
+                    const dynamicCarbonValue = calculateDynamicCarbonValue(item, item.year - 1);
+                    return dynamicCarbonValue / discountFactor; // Apply discount
                 });
                 
                 datasets.push({
@@ -1014,13 +1299,13 @@
                 });
             }
             
-            // Cash flow data (net) with discount applied and proper density adjustments
+            // Cash flow data (net) with discount applied, proper density adjustments, and dynamic pricing
             const cashFlowData = selectedModel.cash_flow.map(item => {
                 const discountFactor = Math.pow(1 + rate, item.year);
-                const carbonValue = includeCarbon ? (item.carbon || 0) : 0;
-                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item);
+                const dynamicCarbonValue = includeCarbon ? calculateDynamicCarbonValue(item, item.year - 1) : 0;
+                const densityAdjustedBenefits = calculateDensityAdjustedBenefits(item, item.year - 1);
                 const densityAdjustedCosts = calculateDensityAdjustedCosts(item);
-                const totalNet = (densityAdjustedBenefits + carbonValue) - densityAdjustedCosts;
+                const totalNet = (densityAdjustedBenefits + dynamicCarbonValue) - densityAdjustedCosts;
                 return totalNet / discountFactor; // Apply discount
             });
             

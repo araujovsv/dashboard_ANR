@@ -7,13 +7,18 @@ def create_real_dashboard_data():
     
     # Path to the Excel file (using the main Input folder)
     excel_path = r"c:\Users\victo\OneDrive\Documentos\Workstation\Projetos\(CSF) Análise Custo Benefício de ANR - WRI\4. Parâmetros médios de MO\Integrated Models Script\Input\ANR_database_30%.xlsx"
+    carbon_path = r"c:\Users\victo\OneDrive\Documentos\Workstation\Projetos\(CSF) Análise Custo Benefício de ANR - WRI\4. Parâmetros médios de MO\Integrated Models Script\dashboard\carbon_data.csv"
     
     print("Loading real data from ANR_database_30%.xlsx...")
+    print("Loading carbon data from carbon_data.csv...")
     
     # Load all sheets
     model_df = pd.read_excel(excel_path, sheet_name='model_wri')
     cost_df = pd.read_excel(excel_path, sheet_name='cost') 
     benefit_df = pd.read_excel(excel_path, sheet_name='benefit')
+    
+    # Load carbon data
+    carbon_df = pd.read_csv(carbon_path, sep=';', decimal=',')
     
     # Exchange rates - Include all currency variations found in data
     exchange_rates = {
@@ -86,20 +91,45 @@ def create_real_dashboard_data():
                         benefits_by_year[year][product_name] = 0
                     benefits_by_year[year][product_name] += benefit_value_usd
         
+        # Process carbon data for this model
+        model_carbon = carbon_df[carbon_df['model_ID'] == model_id]
+        carbon_by_year = {}
+        
+        for _, carbon_row in model_carbon.iterrows():
+            year = int(carbon_row['year'])
+            quantity_tC = float(carbon_row['ntfp_q_2']) if pd.notna(carbon_row['ntfp_q_2']) else 0
+            price = float(carbon_row['ntfp_p_2']) if pd.notna(carbon_row['ntfp_p_2']) else 0
+            
+            # Convert tC to tCO2 by multiplying by 3.67
+            quantity_tCO2 = quantity_tC * 3.67
+            unit = 'tCO2/ha/year'
+            
+            # Calculate carbon value in USD using tCO2 quantity
+            carbon_value_usd = quantity_tCO2 * price
+            carbon_by_year[year] = {
+                'quantity': quantity_tCO2,
+                'price': price, 
+                'unit': unit,
+                'value': carbon_value_usd
+            }
+        
         # Create cash flow data with detailed breakdown
         cash_flow = []
         max_year = max(max(costs_by_year.keys()) if costs_by_year else [1], 
-                      max(benefits_by_year.keys()) if benefits_by_year else [1])
+                      max(benefits_by_year.keys()) if benefits_by_year else [1],
+                      max(carbon_by_year.keys()) if carbon_by_year else [1])
         
         cumulative_cash_flow = 0
         
         for year in range(1, max_year + 1):
             year_costs = costs_by_year.get(year, {})
             year_benefits = benefits_by_year.get(year, {})
+            year_carbon = carbon_by_year.get(year, {})
             
             year_total_costs = sum(year_costs.values())
             year_total_benefits = sum(year_benefits.values())
-            year_net = year_total_benefits - year_total_costs
+            year_carbon_benefits = year_carbon.get('value', 0) if year_carbon else 0
+            year_net = (year_total_benefits + year_carbon_benefits) - year_total_costs  # Include carbon in net calculation
             cumulative_cash_flow += year_net
             
             # Create detailed cost breakdown for tooltip
@@ -134,14 +164,26 @@ def create_real_dashboard_data():
                         "value": amount
                     })
             
+            # Carbon data for this year
+            carbon_details = None
+            if year_carbon and year_carbon.get('value', 0) > 0:
+                carbon_details = {
+                    "quantity": year_carbon['quantity'],
+                    "unit": year_carbon['unit'],
+                    "price": year_carbon['price'],
+                    "value": year_carbon['value']
+                }
+            
             cash_flow.append({
                 "year": year,
                 "costs": year_total_costs,
                 "benefits": year_total_benefits,
+                "carbon": year_carbon_benefits,  # Add carbon as separate field
                 "net": year_net,
                 "cumulative": cumulative_cash_flow,
                 "cost_details": cost_details,
-                "benefit_details": benefit_details
+                "benefit_details": benefit_details,
+                "carbon_details": carbon_details  # Add carbon details
             })
         
         # Create cost and benefit arrays for charts
