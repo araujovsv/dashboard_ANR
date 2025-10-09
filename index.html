@@ -790,20 +790,20 @@
         
         // Base density values for each model (trees/ha at 30% scenario)
         const baseDensityValues = {
-            44: 18,    // Ghana - Vitellaria paradoxa (Shea)
-            27: 1350,  // Ethiopia - Coffea arabica (Coffee)
-            29: 3150,  // Ethiopia - Coffea arabica (Coffee)
-            11: 120,   // Ghana - Vitellaria paradoxa (Shea)
-            31: 60,    // Nigeria - Vitellaria paradoxa (Shea)
-            38: 188,   // Nigeria - Vitellaria paradoxa (Shea)
-            49: 180,   // Brazil - Bertholletia excelsa (Brazil Nut)
-            30: 60,    // Nigeria - Vitellaria paradoxa (Shea)
-            45: 15,    // Ghana - Vitellaria paradoxa (Shea)
-            47: 150,   // Brazil - Bertholletia excelsa (Brazil Nut)
-            28: 10500, // Ethiopia - Coffea arabica (Coffee)
-            43: 30,    // Ghana - Vitellaria paradoxa (Shea)
-            50: 200,   // Brazil - Bertholletia excelsa (Brazil Nut)
-            51: 188    // Nigeria - Vitellaria paradoxa (Shea)
+            44: 80,    // Ghana - Vitellaria paradoxa (Shea)
+            27: 1500,  // Ethiopia - Aframomum corrorima (Ethiopian cardamom/corrorima)
+            29: 3150,  // Ethiopia - Arundinaria alpina (highland bamboo)
+            11: 120,   // Brazil - Euterpe oleracea (Açaí)
+            31: 46,    // Nigeria - Garcinia kola (Bitter kola, Orogbo)
+            38: 200,   // Nigeria - Gnetum africanum (Eruru, Afang, Okana)
+            49: 400,   // Brazil - Ilex paraguariensis (Yerba mate)
+            30: 60,    // Nigeria - Irvingia gabonensis (Bush mango, Ogbono)
+            45: 50,    // Ghana - Parkia biglobosa (Local: Dawadawa)
+            47: 150,   // Brazil - Paullinia cupana (Guarana)
+            28: 2500,  // Ethiopia - Piper capense (Timiz long pepper)
+            43: 100,   // Ghana - Tetrapleura tetraptera (Prekese)
+            50: 200,   // Brazil - Aniba roseaodora
+            51: 550    // Ecuador - Ilex guayusa (guayusa)
         };
         
         // Exchange rates (PPP - World Bank) for currency conversion
@@ -1100,7 +1100,8 @@
             let iterations = 0;
             
             // First, find a reasonable upper bound where NPV becomes positive
-            while (calculateNPVForCarbonPrice(maxPrice) <= 0 && maxPrice < 10000) {
+            // Increase the search limit to handle models with low carbon/high costs ratios
+            while (calculateNPVForCarbonPrice(maxPrice) <= 0 && maxPrice < 50000) {
                 maxPrice *= 2;
             }
             
@@ -1451,24 +1452,24 @@
             
             // Use setTimeout to ensure elements are rendered
             setTimeout(() => {
-                // Set initial values only if inputs are empty (rounded to 2 decimal places)
+                // Set initial values to match the current model prices (always reset to model's actual prices)
                 const ntfpPriceInput = document.getElementById('ntfpPrice');
                 const ntfpGrowthInput = document.getElementById('ntfpGrowthRate');
                 const carbonPriceInput = document.getElementById('carbonPrice');
                 const carbonGrowthInput = document.getElementById('carbonGrowthRate');
                 
-                // Only set default values if inputs are empty or zero
-                if (ntfpPriceInput && (ntfpPriceInput.value === '' || parseFloat(ntfpPriceInput.value) === 0)) {
+                // Set NTFP price to match the current model price (always reset when switching models)
+                if (ntfpPriceInput) {
                     ntfpPriceInput.value = parseFloat(suggestedNTFPPrice.toFixed(2));
                 }
-                if (ntfpGrowthInput && ntfpGrowthInput.value === '') {
-                    ntfpGrowthInput.value = 0;
+                if (ntfpGrowthInput) {
+                    ntfpGrowthInput.value = 0; // Default growth rate
                 }
-                if (carbonPriceInput && (carbonPriceInput.value === '' || parseFloat(carbonPriceInput.value) === 0)) {
+                if (carbonPriceInput) {
                     carbonPriceInput.value = parseFloat(currentCarbonPrice.toFixed(2));
                 }
-                if (carbonGrowthInput && carbonGrowthInput.value === '') {
-                    carbonGrowthInput.value = 0;
+                if (carbonGrowthInput) {
+                    carbonGrowthInput.value = 0; // Default growth rate
                 }
                 
                 // Update current price displays
@@ -1897,60 +1898,52 @@
                 bcr.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
             // Calculate NTFP Break-Even Price
-            console.log('=== NTFP BREAK-EVEN DEBUG ===');
             const breakEvenResult = calculateNTFPBreakEvenPrice();
-            console.log('Break-even result:', breakEvenResult);
-            console.log('NPV:', npv);
             
             if (breakEvenResult && breakEvenResult.hasNTFP) {
-                console.log('✅ Has NTFP, price:', breakEvenResult.price);
                 if (breakEvenResult.price > 0) {
                     const direction = npv < 0 ? '↑' : '↓';
                     const explanation = npv < 0 ? 'min. for profit' : 'max. while profitable';
-                    const displayText = `${direction} $${breakEvenResult.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br><small style="font-size: 0.7em; opacity: 0.8;">${explanation}</small>`;
-                    console.log('Setting NTFP break-even display:', displayText);
-                    document.getElementById('breakevenValue').innerHTML = displayText;
+                    document.getElementById('breakevenValue').innerHTML = 
+                        `${direction} $${breakEvenResult.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br><small style="font-size: 0.7em; opacity: 0.8;">${explanation}</small>`;
                 } else {
                     // Negative break-even price means the project is profitable even with NTFP price = 0
-                    const displayText = '✓ Profitable<br><small style="font-size: 0.7em; opacity: 0.8;">without NTFP</small>';
-                    console.log('Setting NTFP profitable display:', displayText);
-                    document.getElementById('breakevenValue').innerHTML = displayText;
+                    document.getElementById('breakevenValue').innerHTML = '✓ Profitable<br><small style="font-size: 0.7em; opacity: 0.8;">without NTFP</small>';
                 }
             } else {
-                const displayText = 'No NTFP<br><small style="font-size: 0.7em; opacity: 0.8;">in this model</small>';
-                console.log('Setting no NTFP display:', displayText);
-                document.getElementById('breakevenValue').innerHTML = displayText;
+                document.getElementById('breakevenValue').innerHTML = 'No NTFP<br><small style="font-size: 0.7em; opacity: 0.8;">in this model</small>';
             }
 
             // Calculate Carbon Break-Even Price
-            console.log('=== CARBON BREAK-EVEN DEBUG ===');
             const carbonBreakEvenResult = calculateCarbonBreakEvenPrice();
-            console.log('Carbon break-even result:', carbonBreakEvenResult);
             
             if (carbonBreakEvenResult && carbonBreakEvenResult.hasCarbon) {
-                console.log('✅ Has Carbon');
                 if (carbonBreakEvenResult.profitable) {
                     // Model is already profitable without carbon
-                    const displayText = '✓ Profitable<br><small style="font-size: 0.7em; opacity: 0.8;">without carbon</small>';
-                    console.log('Setting carbon profitable display:', displayText);
-                    document.getElementById('carbonBreakevenValue').innerHTML = displayText;
+                    document.getElementById('carbonBreakevenValue').innerHTML = '✓ Profitable<br><small style="font-size: 0.7em; opacity: 0.8;">without carbon</small>';
                 } else if (carbonBreakEvenResult.price !== undefined) {
                     // Found a break-even price
                     const direction = '↑'; // Always up arrow since we need at least this price
-                    const explanation = 'min. for profit';
-                    const displayText = `${direction} $${carbonBreakEvenResult.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}<br><small style="font-size: 0.7em; opacity: 0.8;">${explanation}</small>`;
-                    console.log('Setting carbon break-even display:', displayText);
-                    document.getElementById('carbonBreakevenValue').innerHTML = displayText;
+                    let explanation = 'min. for profit';
+                    let priceDisplay = carbonBreakEvenResult.price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    
+                    // Add indicator for unrealistically high prices
+                    if (carbonBreakEvenResult.price > 1000) {
+                        explanation = 'very high price';
+                        // For very high prices, show in scientific notation or rounded
+                        if (carbonBreakEvenResult.price > 10000) {
+                            priceDisplay = '$' + (carbonBreakEvenResult.price / 1000).toFixed(1) + 'k';
+                        }
+                    }
+                    
+                    document.getElementById('carbonBreakevenValue').innerHTML = 
+                        `${direction} ${priceDisplay}<br><small style="font-size: 0.7em; opacity: 0.8;">${explanation}</small>`;
                 } else {
                     // No break-even possible
-                    const displayText = '✗ No break-even<br><small style="font-size: 0.7em; opacity: 0.8;">possible</small>';
-                    console.log('Setting carbon no break-even display:', displayText);
-                    document.getElementById('carbonBreakevenValue').innerHTML = displayText;
+                    document.getElementById('carbonBreakevenValue').innerHTML = '✗ No break-even<br><small style="font-size: 0.7em; opacity: 0.8;">possible</small>';
                 }
             } else {
-                const displayText = 'No Carbon<br><small style="font-size: 0.7em; opacity: 0.8;">in this model</small>';
-                console.log('Setting no carbon display:', displayText);
-                document.getElementById('carbonBreakevenValue').innerHTML = displayText;
+                document.getElementById('carbonBreakevenValue').innerHTML = 'No Carbon<br><small style="font-size: 0.7em; opacity: 0.8;">in this model</small>';
             }
         }
 
